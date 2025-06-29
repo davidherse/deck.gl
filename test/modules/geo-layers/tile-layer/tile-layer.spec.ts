@@ -311,6 +311,42 @@ test('TileLayer#debounceTime', async t => {
   t.end();
 });
 
+test('TileLayer#updateWhenIdle', async t => {
+  const testViewport = new WebMercatorViewport({width: 1200, height: 400, zoom: 8});
+  const testCases = [
+    {
+      title: 'updateWhenIdle = false',
+      props: {debounceTime: 20, getTileData: () => [], updateWhenIdle: false},
+      spies: ['_updateTileset'],
+      onAfterUpdate: ({layer, spies}) => {
+        if (!layer.isLoaded) {
+          t.ok(spies._updateTileset.called, '_updateTileset called immediately');
+          spies._updateTileset.restore();
+        }
+      }
+    },
+    {
+      title: 'updateWhenIdle = true',
+      props: {debounceTime: 20, getTileData: () => [], updateWhenIdle: true},
+      spies: ['_updateTileset'],
+      onAfterUpdate: ({layer, spies}) => {
+        if (!layer.isLoaded) {
+          t.notOk(spies._updateTileset.called, '_updateTileset delayed');
+          t.ok(layer.state._updateTimer, 'debounce timer started');
+        } else {
+          t.ok(spies._updateTileset.called, '_updateTileset called after delay');
+          t.notOk(layer.state._updateTimer, 'debounce timer cleared');
+          spies._updateTileset.restore();
+        }
+      }
+    }
+  ];
+
+  await testLayerAsync({Layer: TileLayer, viewport: testViewport, testCases, onError: t.fail});
+
+  t.end();
+});
+
 function sleep(ms) {
   return new Promise(resolve => {
     /* global setTimeout */

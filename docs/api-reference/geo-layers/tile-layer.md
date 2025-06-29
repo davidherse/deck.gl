@@ -329,6 +329,12 @@ If `debounceTime > 0`, tile requests are queued until a period of at least `debo
 
 - Default: `0`
 
+#### `updateWhenIdle` (boolean, optional) {#updatewhenidle}
+
+Delay tile index updates until no viewport changes occur for at least `debounceTime` milliseconds. When enabled, visible tiles are recalculated only after the view is idle, reducing per-frame work during map interactions.
+
+- Default: `false`
+
 ### Render Options
 
 #### `renderSubLayers` (Function, optional) {#rendersublayers}
