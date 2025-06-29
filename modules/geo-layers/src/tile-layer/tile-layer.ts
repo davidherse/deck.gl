@@ -49,6 +49,7 @@ const defaultProps: DefaultProps<TileLayerProps> = {
   zRange: null,
   maxRequests: 6,
   debounceTime: 0,
+  updateWhenIdle: false,
   zoomOffset: 0
 };
 
@@ -141,6 +142,13 @@ type _TileLayerProps<DataT> = {
   debounceTime?: number;
 
   /**
+   * Delay tile index updates until no viewport changes for at least `debounceTime` milliseconds.
+   *
+   * @default false
+   */
+  updateWhenIdle?: boolean;
+
+  /**
    * This offset changes the zoom level at which the tiles are fetched.
    *
    * Needs to be an integer.
@@ -177,17 +185,22 @@ export default class TileLayer<DataT = any, ExtraPropsT extends {} = {}> extends
     tileset: Tileset2D | null;
     isLoaded: boolean;
     frameNumber?: number;
+    _updateTimer?: any;
   };
 
   initializeState() {
     this.state = {
       tileset: null,
-      isLoaded: false
+      isLoaded: false,
+      _updateTimer: null
     };
   }
 
   finalizeState() {
     this.state?.tileset?.finalize();
+    if (this.state._updateTimer) {
+      clearTimeout(this.state._updateTimer);
+    }
   }
 
   get isLoaded(): boolean {
@@ -228,7 +241,12 @@ export default class TileLayer<DataT = any, ExtraPropsT extends {} = {}> extends
       }
     }
 
-    this._updateTileset();
+    const {updateWhenIdle} = this.props;
+    if (updateWhenIdle && changeFlags.viewportChanged && !propsChanged) {
+      this._debounceUpdateTileset();
+    } else {
+      this._updateTileset();
+    }
   }
 
   _getTilesetOptions(): Tileset2DProps {
@@ -402,5 +420,15 @@ export default class TileLayer<DataT = any, ExtraPropsT extends {} = {}> extends
   filterSubLayer({layer, cullRect}: FilterContext) {
     const {tile} = (layer as Layer<{tile: Tile2DHeader}>).props;
     return this.state.tileset!.isTileVisible(tile, cullRect);
+  }
+
+  private _debounceUpdateTileset(): void {
+    clearTimeout(this.state._updateTimer);
+    const delay = this.props.debounceTime || 0;
+    this.state._updateTimer = setTimeout(() => {
+      this.state._updateTimer = null;
+      this._updateTileset();
+      this.setNeedsUpdate();
+    }, delay);
   }
 }

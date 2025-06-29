@@ -560,6 +560,7 @@ A new prop `binary` is added to the MVTLayer. If set to `true`, it removes the n
   + Adds experimental `_imageCoordinateSystem` prop, so that raster tiles may render correctly in `GlobeView`.
 - **GlobeView** now works with `COORDINATE_SYSTEM.CARTESIAN` and `SunLight`.
 - **TileLayer** now supports `modelMatrix`.
+- **TileLayer** adds `updateWhenIdle` option to defer tile updates until the map is idle.
 - **IconLayer** adds `onIconError` callback.
 - **OrthographicView** adds `flipY` option.
 - **ArcLayer** and **LineLayer** now render the shortest path with `wrapLongitude: true`.
